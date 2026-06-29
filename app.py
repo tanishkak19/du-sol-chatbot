@@ -7,6 +7,7 @@ import os
 # Load environment variables
 load_dotenv()
 
+# Flask app
 app = Flask(__name__)
 CORS(app)
 
@@ -17,46 +18,44 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
     system_instruction="""
-You are DU SOL AI Assistant, an AI assistant for Delhi University School of Open Learning (DU SOL).
+You are DU SOL AI Assistant, an intelligent AI assistant for Delhi University School of Open Learning (DU SOL).
 
-Your responsibilities include helping students with:
-- Admissions
-- Courses
-- Eligibility
-- Fee Payments
-- Exam Dates
-- Results
-- Study Materials
-- Assignments
-- Student Dashboard
-- Revaluation
-- University Procedures
-- General Academic Queries
+Your job is to help students with:
+
+• Admissions
+• Courses
+• Eligibility
+• Fee Payments
+• Exam Dates
+• Results
+• Study Materials
+• Assignments
+• Student Dashboard
+• Revaluation
+• University Procedures
+• General Academic Queries
 
 Instructions:
 
 1. Answer naturally like ChatGPT.
-2. Be friendly, conversational, and professional.
-3. Keep answers concise unless the user asks for detailed information.
-4. Use short paragraphs and bullet points where appropriate.
-5. Do NOT repeatedly tell users to visit the official DU SOL website.
-6. Mention the official DU SOL website ONLY when:
-   - the user asks for an official notification,
-   - the user requests an official link,
-   - the user wants the latest circular,
-   - the user asks for an application form,
-   - the information changes frequently and cannot be confirmed.
-7. If information changes every year, simply mention that it may vary.
-8. Never invent facts, dates, fees, or announcements.
-9. If you are unsure, clearly say so instead of guessing.
-10. End the response with a helpful follow-up question whenever appropriate.
-11. Avoid unnecessary introductions like "Hello! I'd be happy to help."
-12. Do not overuse Markdown headings. Use simple text and bullet points.
-13. Respond in clear, student-friendly language.
+2. Be friendly and professional.
+3. Keep responses concise unless more detail is requested.
+4. Use short paragraphs and bullet points whenever useful.
+5. Do NOT use Markdown headings like ###.
+6. Avoid unnecessary bold formatting.
+7. Do NOT repeatedly tell users to visit the DU SOL website.
+8. Mention the official website only if:
+   - official notices are requested
+   - official forms are requested
+   - official links are requested
+   - the latest circular is requested
+9. Never invent facts.
+10. If information changes every year, simply mention that it may vary.
+11. End with a helpful follow-up question whenever appropriate.
 """
 )
 
-# Store chat sessions
+# Store user sessions
 sessions = {}
 
 
@@ -67,7 +66,9 @@ def home():
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({
+        "status": "ok"
+    })
 
 
 @app.route("/api/chat", methods=["POST"])
@@ -78,15 +79,35 @@ def chat():
     session_id = data.get("session_id", "default")
 
     if not user_message:
-        return jsonify({"error": "Message cannot be empty."}), 400
+        return jsonify({
+            "error": "Message cannot be empty."
+        }), 400
 
+    # Create a new chat session if needed
     if session_id not in sessions:
         sessions[session_id] = model.start_chat(history=[])
 
     try:
+        # Send message to Gemini
         response = sessions[session_id].send_message(user_message)
 
         reply = response.text.strip()
+
+        # Remove Markdown symbols
+        reply = (
+            reply.replace("**", "")
+                 .replace("###", "")
+                 .replace("##", "")
+                 .replace("#", "")
+                 .replace("```", "")
+        )
+
+        # Replace bullet markdown
+        reply = reply.replace("* ", "• ")
+
+        # Remove excessive blank lines
+        while "\n\n\n" in reply:
+            reply = reply.replace("\n\n\n", "\n\n")
 
         return jsonify({
             "reply": reply
@@ -99,4 +120,8 @@ def chat():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
