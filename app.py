@@ -298,7 +298,7 @@ def chat():
             "error": "Message cannot be empty."
         }), 400
 
-    # Create new chat session if required
+       # Create new chat session if required
     if session_id not in sessions:
         sessions[session_id] = model.start_chat(history=[])
 
@@ -307,18 +307,21 @@ def chat():
         # Send prompt to Gemini
         response = sessions[session_id].send_message(user_message)
 
+        print("=" * 60)
+        print("USER MESSAGE:")
+        print(user_message)
+        print("=" * 60)
+
+        print("RAW RESPONSE:")
+        print(response)
+        print("=" * 60)
+
         reply = response.text.strip()
 
-        # --------------------------------------
-        # Remove code blocks
-        # --------------------------------------
-
+        # Remove markdown code blocks
         reply = reply.replace("```", "")
 
-        # --------------------------------------
-        # Convert DU SOL domains to clickable URLs
-        # --------------------------------------
-
+        # Convert DU SOL URLs into clickable links
         reply = re.sub(
             r'(?<!https://)(?<!http://)\b(www\.sol\.du\.ac\.in)\b',
             r'https://\1',
@@ -333,10 +336,7 @@ def chat():
             flags=re.IGNORECASE
         )
 
-        # --------------------------------------
         # Remove extra blank lines
-        # --------------------------------------
-
         while "\n\n\n" in reply:
             reply = reply.replace("\n\n\n", "\n\n")
 
@@ -346,18 +346,19 @@ def chat():
 
     except Exception as e:
 
+        import traceback
+
+        print("\n" + "=" * 80)
+        print("ERROR OCCURRED")
+        print("=" * 80)
+
+        traceback.print_exc()
+
+        print("\nException Type:", type(e).__name__)
+        print("Exception Message:", str(e))
+
+        print("=" * 80 + "\n")
+
         return jsonify({
             "error": str(e)
         }), 500
-
-# ==========================================
-# Run Flask
-# ==========================================
-
-if __name__ == "__main__":
-    app.run(
-    host="127.0.0.1",
-    port=5000,
-    debug=True
-)
-    
