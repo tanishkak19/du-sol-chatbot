@@ -248,6 +248,12 @@ Always insert blank lines before URLs.
 Never return one large paragraph.
 
 Your responses should resemble the formatting style used by ChatGPT..
+Language Rules
+
+- Always reply in English unless the user explicitly asks for another language.
+- If the user asks in Hindi, reply in Hindi.
+- If the user asks in English, reply only in English.
+- Never switch languages on your own
 """
 )
 
@@ -350,7 +356,8 @@ def chat():
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
+    host="127.0.0.1",
+    port=5000,
+    debug=True
+)
+    
